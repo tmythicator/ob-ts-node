@@ -5,7 +5,7 @@
   Org-babel support for evaluating typescript files, based on support of [[https://github.com/TypeStrong/ts-node][ts-node]].
   In contrast to [[https://github.com/lurdan/ob-typescript][ob-typescript]], ob-ts-node can support CommonJS-style imports without too much of a hassle:
   #+BEGIN_EXAMPLE
-  #+BEGIN_SRC ts-node
+  ,#+BEGIN_SRC ts-node
     const https = require('https');
 
     https.get("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY", (resp) => {
@@ -24,8 +24,8 @@
     }).on("error", (err) => {
         console.log("Error: " + err.message);
     });
-  #+END_SRC
-  #+RESULTS:
+  ,#+END_SRC
+  ,#+RESULTS:
   : Geminid Meteors over Xinglong Observatory
   #+END_EXAMPLE
 ** Status [1/3]
@@ -67,18 +67,18 @@
     - *:cli-args*:
       Use this header to prepend =ts-node= CLI arguments for evaluation. This would be equal to executing =ts-node <my-args> <my-org-babel-snippet>=:
       #+BEGIN_EXAMPLE
-      #+BEGIN_SRC ts-node :cli-args "--project /path/to/tsconfig.json"
+      ,#+BEGIN_SRC ts-node :cli-args "--project /path/to/tsconfig.json"
       // your code goes here
-      #+END_SRC
+      ,#+END_SRC
       #+END_EXAMPLE
     - *:cli-override*:
       Use this header to completely override the arguments of =ts-node=. This would be equal to executing =ts-node <my-args>=:
       #+BEGIN_EXAMPLE
-      #+BEGIN_SRC ts-node :cli-override "-v"
+      ,#+BEGIN_SRC ts-node :cli-override "-v"
         console.log(43)
-      #+END_SRC
+      ,#+END_SRC
 
-      #+RESULTS:
+      ,#+RESULTS:
       : v9.1.1
       #+END_EXAMPLE
 
