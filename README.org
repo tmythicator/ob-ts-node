@@ -1,0 +1,95 @@
+#+OPTIONS: toc:nil
+#+OPTIONS: num:nil
+
+* Org Babel TS-Node
+  Org-babel support for evaluating typescript files, based on support of [[https://github.com/TypeStrong/ts-node][ts-node]].
+  In contrast to [[https://github.com/lurdan/ob-typescript][ob-typescript]], ob-ts-node can support CommonJS-style imports without too much of a hassle:
+  #+BEGIN_EXAMPLE
+  #+BEGIN_SRC ts-node
+    const https = require('https');
+
+    https.get("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY", (resp) => {
+        let data = '';
+
+        // A chunk of data has been recieved.
+        resp.on('data', (chunk) => {
+            data += chunk;
+        });
+
+
+        resp.on('end', () => {
+            console.log(JSON.parse(data).title);
+        });
+
+    }).on("error", (err) => {
+        console.log("Error: " + err.message);
+    });
+  #+END_SRC
+  #+RESULTS:
+  : Geminid Meteors over Xinglong Observatory
+  #+END_EXAMPLE
+** Status [1/3]
+   The project is more or less in beta. But still, one can benefit from using it.
+
+   - [X] Basic support for evaluation
+   - [ ] Better support for customization
+   - [ ] Support for `:session`
+** Installation
+*** Using `use-package` and `quelpa` packages (recommended):
+    #+BEGIN_SRC elisp
+      (use-package ob-ts-node
+        :ensure t
+        :quelpa
+        (ob-ts-node :repo "atimchenko92/ob-ts-node"
+                    :fetcher github))
+    #+END_SRC
+
+*** Manual instalation:
+    #+BEGIN_SRC elisp
+      (add-to-list 'load-path "/path/to/ob-ts-node.el")
+      (require 'ob-ts-node)
+    #+END_SRC
+
+*** Node.js requirements installation:
+    #+BEGIN_SRC sh
+      npm i -g node typescript ts-node
+    #+END_SRC
+
+** Configuration
+*** Append `ts-node` to the `org-babel-load-languages`
+    #+BEGIN_SRC elisp
+      (org-babel-do-load-languages
+       'org-babel-load-languages
+       '((ts-node . t)
+         ))
+    #+END_SRC
+*** Supported header args
+    - *:cli-args*:
+      Use this header to prepend =ts-node= CLI arguments for evaluation. This would be equal to executing =ts-node <my-args> <my-org-babel-snippet>=:
+      #+BEGIN_EXAMPLE
+      #+BEGIN_SRC ts-node :cli-args "--project /path/to/tsconfig.json"
+      // your code goes here
+      #+END_SRC
+      #+END_EXAMPLE
+    - *:cli-override*:
+      Use this header to completely override the arguments of =ts-node=. This would be equal to executing =ts-node <my-args>=:
+      #+BEGIN_EXAMPLE
+      #+BEGIN_SRC ts-node :cli-override "-v"
+        console.log(43)
+      #+END_SRC
+
+      #+RESULTS:
+      : v9.1.1
+      #+END_EXAMPLE
+
+** Troubleshooting
+*** Common TSError: missing @types/node dependency
+    #+BEGIN_SRC text
+      TSError: ⨯ Unable to compile TypeScript:
+      ../../../../../tmp/babel-abcde/ts-fghij.ts(1,15): error TS2580: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+    #+END_SRC
+
+    If this error appears, running this command locally to org-file should solve the problem:
+    #+BEGIN_SRC sh
+      npm i --save-dev @types/node
+    #+END_SRC
