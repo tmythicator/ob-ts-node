@@ -38,7 +38,6 @@
 *** Using `use-package` and `quelpa` packages (recommended):
     #+BEGIN_SRC elisp
       (use-package ob-ts-node
-        :ensure t
         :quelpa
         (ob-ts-node :repo "atimchenko92/ob-ts-node"
                     :fetcher github))
