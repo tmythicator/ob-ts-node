@@ -35,7 +35,7 @@
    - [ ] Better support for customization
    - [ ] Support for `:session`
 ** Installation
-*** Using `use-package` and `quelpa` packages (recommended):
+*** Using [[https://github.com/jwiegley/use-package][use-package]] and [[https://github.com/quelpa/quelpa][quelpa]] packages (recommended):
     #+BEGIN_SRC elisp
       (use-package ob-ts-node
         :quelpa
@@ -55,11 +55,11 @@
     #+END_SRC
 
 ** Configuration
-*** Append =typescript= to the =org-babel-load-languages=
+*** Append =ts-node= to the =org-babel-load-languages=
     #+BEGIN_SRC elisp
       (org-babel-do-load-languages
        'org-babel-load-languages
-       '((typescript . t)
+       '((ts-node . t)
          ))
     #+END_SRC
 *** Supported header args
