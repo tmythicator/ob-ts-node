@@ -1,14 +1,14 @@
 #+OPTIONS: toc:nil
 #+OPTIONS: num:nil
 
-* Org Babel TS-Node
+* Org Babel support for Typescript via =ts-node=
   Org-babel support for evaluating typescript files, based on support of [[https://github.com/TypeStrong/ts-node][ts-node]].
   In contrast to [[https://github.com/lurdan/ob-typescript][ob-typescript]], ob-ts-node can support CommonJS-style imports without too much of a hassle:
   #+BEGIN_EXAMPLE
-  ,#+BEGIN_SRC ts-node
+  ,#+BEGIN_SRC typescript
     const https = require('https');
 
-    https.get("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY", (resp) => {
+    https.get('https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY', (resp) => {
         let data = '';
 
         // A chunk of data has been recieved.
@@ -43,7 +43,7 @@
                     :fetcher github))
     #+END_SRC
 
-*** Manual instalation:
+*** Manual installation:
     #+BEGIN_SRC elisp
       (add-to-list 'load-path "/path/to/ob-ts-node.el")
       (require 'ob-ts-node)
@@ -55,25 +55,25 @@
     #+END_SRC
 
 ** Configuration
-*** Append `ts-node` to the `org-babel-load-languages`
+*** Append =typescript= to the =org-babel-load-languages=
     #+BEGIN_SRC elisp
       (org-babel-do-load-languages
        'org-babel-load-languages
-       '((ts-node . t)
+       '((typescript . t)
          ))
     #+END_SRC
 *** Supported header args
     - *:cli-args*:
       Use this header to prepend =ts-node= CLI arguments for evaluation. This would be equal to executing =ts-node <my-args> <my-org-babel-snippet>=:
       #+BEGIN_EXAMPLE
-      ,#+BEGIN_SRC ts-node :cli-args "--project /path/to/tsconfig.json"
+      ,#+BEGIN_SRC typescript :cli-args "--project /path/to/tsconfig.json"
       // your code goes here
       ,#+END_SRC
       #+END_EXAMPLE
     - *:cli-override*:
       Use this header to completely override the arguments of =ts-node=. This would be equal to executing =ts-node <my-args>=:
       #+BEGIN_EXAMPLE
-      ,#+BEGIN_SRC ts-node :cli-override "-v"
+      ,#+BEGIN_SRC typescript :cli-override "-v"
         console.log(43)
       ,#+END_SRC
 

@@ -44,12 +44,12 @@
 (require 'ob)
 (require 'typescript-mode)
 
-(add-to-list 'org-babel-tangle-lang-exts '("ts-node" . "ts"))
-(defvar org-babel-default-header-args:ts-node '((:cli-args . nil)
-                                                (:cli-override . nil)))
+(add-to-list 'org-babel-tangle-lang-exts '("typescript" . "ts"))
+(defvar org-babel-default-header-args:typescript '((:cli-args . nil)
+                                                   (:cli-override . nil)))
 
 ;;;###autoload
-(defun org-babel-execute:ts-node (body params)
+(defun org-babel-execute:typescript (body params)
   "Execute a block of Typescript code with org-babel.  This function is
 called by `org-babel-execute-src-block'"
   (let* ((source-file (org-babel-temp-file "ts-" ".ts"))
@@ -69,7 +69,7 @@ called by `org-babel-execute-src-block'"
 
 ;;;###autoload
 (eval-after-load "org"
-  '(add-to-list 'org-src-lang-modes '("ts-node" . typescript)))
+  '(add-to-list 'org-src-lang-modes '("typescript" . typescript)))
 
 (provide 'ob-ts-node)
 ;;; ob-ts-node.el ends here
