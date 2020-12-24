@@ -38,6 +38,7 @@
 *** Using [[https://github.com/jwiegley/use-package][use-package]] and [[https://github.com/quelpa/quelpa][quelpa]] packages (recommended):
     #+BEGIN_SRC elisp
       (use-package ob-ts-node
+        :after org typescript
         :quelpa
         (ob-ts-node :repo "atimchenko92/ob-ts-node"
                     :fetcher github))
