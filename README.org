@@ -2,7 +2,7 @@
 #+OPTIONS: num:nil
 
 * Org Babel support for Typescript via =ts-node=
-  Org-babel support for evaluating typescript files, based on support of [[https://github.com/TypeStrong/ts-node][ts-node]].
+  Org-babel support for evaluating typescript code, based on support of [[https://github.com/TypeStrong/ts-node][ts-node]].
   In contrast to [[https://github.com/lurdan/ob-typescript][ob-typescript]], ob-ts-node can support CommonJS-style imports without too much of a hassle:
   #+BEGIN_EXAMPLE
   ,#+BEGIN_SRC typescript
