@@ -40,7 +40,7 @@
       (use-package ob-ts-node
         :after org typescript
         :quelpa
-        (ob-ts-node :repo "atimchenko92/ob-ts-node"
+        (ob-ts-node :repo "tmythicator/ob-ts-node"
                     :fetcher github))
     #+END_SRC
 

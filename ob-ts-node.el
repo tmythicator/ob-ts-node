@@ -4,7 +4,7 @@
 
 ;; Author: Alexandr Timchenko
 ;; Keywords: literate programming, typescript, REPL
-;; Homepage: https://github.com/atimchenko92/ob-ts-node
+;; Homepage: https://github.com/tmythicator/ob-ts-node
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "24") (org "8.0"))
 
