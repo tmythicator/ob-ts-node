@@ -1,95 +1,119 @@
-#+OPTIONS: toc:nil
-#+OPTIONS: num:nil
+#+TITLE: ob-ts-node
+#+OPTIONS: toc:nil num:nil
 
 * Org Babel support for Typescript via =ts-node=
-  Org-babel support for evaluating typescript code, based on support of [[https://github.com/TypeStrong/ts-node][ts-node]].
-  In contrast to [[https://github.com/lurdan/ob-typescript][ob-typescript]], ob-ts-node can support CommonJS-style imports without too much of a hassle:
-  #+BEGIN_EXAMPLE
-  ,#+BEGIN_SRC typescript
-    const https = require('https');
+This package adds [[https://orgmode.org/worg/org-contrib/babel/][Org-Babel]] support support for evaluating =typescript= (and =ts= alias) code blocks using using [[https://github.com/TypeStrong/ts-node][ts-node]].
+Unlike [[https://github.com/lurdan/ob-typescript][ob-typescript]], ob-ts-node works seamlessly with Node.js CommonJS-style imports and does not require extra transpilation setup.
 
-    https.get('https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY', (resp) => {
-        let data = '';
+** Example
+#+BEGIN_EXAMPLE
+,#+BEGIN_SRC typescript :cli-args "--transpile-only"
+  const https = require('https');
 
-        // A chunk of data has been recieved.
-        resp.on('data', (chunk) => {
-            data += chunk;
-        });
+  https.get('https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY', (resp) => {
+      let data = '';
+
+      // A chunk of data has been recieved.
+      resp.on('data', (chunk) => {
+          data += chunk;
+      });
 
 
-        resp.on('end', () => {
-            console.log(JSON.parse(data).title);
-        });
+      resp.on('end', () => {
+          console.log(JSON.parse(data).title);
+      });
 
-    }).on("error", (err) => {
-        console.log("Error: " + err.message);
-    });
-  ,#+END_SRC
-  ,#+RESULTS:
-  : Geminid Meteors over Xinglong Observatory
-  #+END_EXAMPLE
-** Status [1/3]
-   The project is more or less in beta. But still, one can benefit from using it.
+  }).on("error", (err) => {
+      console.log("Error: " + err.message);
+  });
+,#+END_SRC
+,#+RESULTS:
+: Leopard Spots on Martian Rocks
+#+END_EXAMPLE
 
-   - [X] Basic support for evaluation
-   - [ ] Better support for customization
-   - [ ] Support for `:session`
+Note: Unlike Elisp, external languages only return results via =stdout=. To capture values, you must =console.log= them.
+
+** Status [2/3]
+The project is more or less in beta. But still, one can benefit from using it.
+
+- [X] Basic support for evaluation
+- [X] Better support for customization
+- [ ] Support for `:session`
 ** Installation
 *** Using [[https://github.com/jwiegley/use-package][use-package]] and [[https://github.com/quelpa/quelpa][quelpa]] packages (recommended):
-    #+BEGIN_SRC elisp
-      (use-package ob-ts-node
-        :after org typescript
-        :quelpa
-        (ob-ts-node :repo "tmythicator/ob-ts-node"
-                    :fetcher github))
-    #+END_SRC
+#+BEGIN_SRC elisp
+  (use-package ob-ts-node
+    :after org
+    :quelpa
+    (ob-ts-node :repo "tmythicator/ob-ts-node"
+                :fetcher github))
+#+END_SRC
 
-*** Manual installation:
-    #+BEGIN_SRC elisp
-      (add-to-list 'load-path "/path/to/ob-ts-node.el")
-      (require 'ob-ts-node)
-    #+END_SRC
+*** Manual:
+#+BEGIN_SRC elisp
+  (add-to-list 'load-path "/path/to/ob-ts-node.el")
+  (require 'ob-ts-node)
+#+END_SRC
 
-*** Node.js requirements installation:
-    #+BEGIN_SRC sh
-      npm i -g node typescript ts-node
-    #+END_SRC
+*** Node.js dependencies:
+#+BEGIN_SRC sh
+  npm i -g node typescript ts-node
+#+END_SRC
 
 ** Configuration
-*** Append =ts-node= to the =org-babel-load-languages=
-    #+BEGIN_SRC elisp
-      (org-babel-do-load-languages
-       'org-babel-load-languages
-       '((ts-node . t)
-         ))
-    #+END_SRC
-*** Supported header args
-    - *:cli-args*:
-      Use this header to prepend =ts-node= CLI arguments for evaluation. This would be equal to executing =ts-node <my-args> <my-org-babel-snippet>=:
-      #+BEGIN_EXAMPLE
-      ,#+BEGIN_SRC typescript :cli-args "--project /path/to/tsconfig.json"
-      // your code goes here
-      ,#+END_SRC
-      #+END_EXAMPLE
-    - *:cli-override*:
-      Use this header to completely override the arguments of =ts-node=. This would be equal to executing =ts-node <my-args>=:
-      #+BEGIN_EXAMPLE
-      ,#+BEGIN_SRC typescript :cli-override "-v"
-        console.log(43)
-      ,#+END_SRC
+Append =ts-node= to the =org-babel-load-languages=
+#+BEGIN_SRC elisp
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((ts-node . t)
+     ))
+#+END_SRC
+*** Header arguments
+- *:cli-args*:
+  Extra flags passed to ts-node:
+  #+BEGIN_EXAMPLE
+  ,#+BEGIN_SRC typescript :cli-args "--project /path/to/tsconfig.json"
+  // your code goes here
+  ,#+END_SRC
+  #+END_EXAMPLE
 
-      ,#+RESULTS:
-      : v9.1.1
-      #+END_EXAMPLE
+- *:cli-override*:
+  Completely override the arguments:
+  #+BEGIN_EXAMPLE
+  ,#+BEGIN_SRC typescript :cli-override "-v"
+    console.log(43)
+  ,#+END_SRC
+
+  ,#+RESULTS:
+  : v9.1.1
+  #+END_EXAMPLE
+
+- *:cli-cmd*
+  Override the command entirely (default is =ts-node=, customizable via =ob-ts-node-command=):
+  #+BEGIN_EXAMPLE
+  ,#+BEGIN_SRC ts :cli-cmd "npx tsx"
+  console.log("Using tsx");
+  ,#+END_SRC
+  #+END_EXAMPLE
+
+** Compatibility
+- Requires: Emacs >=25.1 (for =alist-get=), Org >=8.0
+- Emacs >=29: uses built-in =typescript-ts-mode=
+- Emacs <29: falls back to built-in =typescript-mode= (lisp/progmodes/typescript.el)
+- Otherwise: =js-mode= fallback
 
 ** Troubleshooting
-*** Common TSError: missing @types/node dependency
-    #+BEGIN_SRC text
-      TSError: ⨯ Unable to compile TypeScript:
-      ../../../../../tmp/babel-abcde/ts-fghij.ts(1,15): error TS2580: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    #+END_SRC
+*** Missing @types/node dependency
+#+BEGIN_SRC text
+  error TS2580: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+#+END_SRC
 
-    If this error appears, running this command locally to org-file should solve the problem:
-    #+BEGIN_SRC sh
-      npm i --save-dev @types/node
-    #+END_SRC
+Solution:
+#+BEGIN_SRC sh
+  npm i --save-dev @types/node
+#+END_SRC
+*** Parameter "x" implicitly has 'any' type
+#+BEGIN_SRC text
+  error TS7006: Parameter 'resp' implicitly has an 'any' type.
+#+END_SRC
+Solution: use =:cli-args "--transpile-only"= in babel header

@@ -1,15 +1,17 @@
-;;; ob-ts-node.el --- org-babel support for evaluating typescript code.
+;;; ob-ts-node.el --- Org-Babel support for TypeScript via ts-node -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2020 Alexandr Timchenko
+;; Copyright (C) 2020-2025  Alexandr Timchenko
 
 ;; Author: Alexandr Timchenko
-;; Keywords: literate programming, typescript, REPL
-;; Homepage: https://github.com/tmythicator/ob-ts-node
-;; Version: 0.1
-;; Package-Requires: ((emacs "24") (org "8.0"))
+;; URL: https://github.com/tmythicator/ob-ts-node
+;; Version: 0.2
+;; Keywords: literate programming, typescript, org-babel, REPL
+;; Package-Requires: ((emacs "25.1") (org "8.0"))
+
+;; This file is not part of GNU Emacs.
 
 ;;; License:
-
+;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 3, or (at your option)
@@ -21,48 +23,82 @@
 ;; GNU General Public License for more details.
 ;;
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-
-;; Org-babel support for evaluating typescript code, based on support of ts-node.
+;;
+;; Org-Babel support for evaluating TypeScript code blocks using ts-node.
 ;; See: https://github.com/TypeStrong/ts-node
-
-;;; Requirements:
-;; You need to install node.js and ts-node to use this extension.
+;;
+;; Requirements:
+;; - Node.js
+;; - ts-node
+;;
+;; Integration:
+;; - Emacs >=29: uses built-in `typescript-ts-mode`
+;; - Emacs <29: falls back to built-in `typescript-mode` (lisp/progmodes/typescript.el)
+;; - If neither mode is available (non-standard builds): fallback to `js-mode`.
+;;
+;; Provides:
+;; - Execution of `#+begin_src typescript` and `#+begin_src ts` blocks
+;; - Automatic tangling to `.ts` files
+;;
 
 ;;; Code:
 (require 'ob)
-(require 'typescript-mode)
 
-(add-to-list 'org-babel-tangle-lang-exts '("typescript" . "ts"))
-(defvar org-babel-default-header-args:typescript '((:cli-args . nil)
-                                                   (:cli-override . nil)))
+(defcustom ob-ts-node-command "ts-node"
+  "Default command used to run ts-node."
+  :type 'string
+  :group 'org-babel)
+
+(defvar org-babel-default-header-args:typescript
+  '((:cli-args    . nil)   ;; additional flags for ts-node
+    (:cli-override . nil)  ;; completely override the command line
+    (:cli-cmd . nil))  ;; use an alternative command instead of `ob-ts-node-command`
+  "Default header arguments for TypeScript Babel blocks.")
+
+(defun ob-ts-node--run (body params)
+  "Execute BODY as TypeScript code using ts-node with PARAMS."
+  (let* ((src (org-babel-temp-file "ts-" ".ts"))
+         (args (alist-get :cli-args params))
+         (ovr (alist-get :cli-override params))
+         (cmd (or (alist-get :cli-cmd params) ob-ts-node-command))
+         (file (org-babel-process-file-name src)))
+    (with-temp-file src (insert body))
+    (let ((command
+           (cond
+            (ovr  (format "%s %s" cmd ovr))
+            (args (format "%s %s %s" cmd args file))
+            (t    (format "%s %s"    cmd file)))))
+      (org-babel-eval command ""))))
 
 ;;;###autoload
 (defun org-babel-execute:typescript (body params)
-  "Execute a block of Typescript code with org-babel.  This function is
-called by `org-babel-execute-src-block'"
-  (let* ((source-file (org-babel-temp-file "ts-" ".ts"))
-         (args (cdr (assoc :cli-args params)))
-         (override-args (cdr (assoc :cli-override params))))
-    (with-temp-file source-file (insert body))
-    (org-babel-eval (if override-args
-                        (format "ts-node %s" override-args)
-                      (if args
-                          (format "ts-node %s %s"
-                                  args
-                                  (org-babel-process-file-name source-file))
-                        (format "ts-node %s"
-                                (org-babel-process-file-name source-file))))
-                    "")))
-
+  "Org-Babel executor for #+begin_src typescript blocks."
+  (ob-ts-node--run body params))
 
 ;;;###autoload
-(eval-after-load "org"
-  '(add-to-list 'org-src-lang-modes '("typescript" . typescript)))
+(defun org-babel-execute:ts (body params)
+  "Org-Babel executor for #+begin_src ts blocks (alias for typescript)."
+  (ob-ts-node--run body params))
+
+(with-eval-after-load 'org
+  (add-to-list 'org-babel-tangle-lang-exts '("typescript" . "ts"))
+  (add-to-list 'org-babel-tangle-lang-exts '("ts"         . "ts"))
+  (add-to-list 'org-src-lang-modes
+               (cons "typescript"
+                     (cond
+                      ((fboundp 'typescript-ts-mode) 'typescript-ts)
+                      ((fboundp 'typescript-mode)    'typescript)
+                      (t 'js))))
+  (add-to-list 'org-src-lang-modes
+               (cons "ts"
+                     (cond
+                      ((fboundp 'typescript-ts-mode) 'typescript-ts)
+                      ((fboundp 'typescript-mode)    'typescript)
+                      (t 'js)))))
 
 (provide 'ob-ts-node)
+
 ;;; ob-ts-node.el ends here
