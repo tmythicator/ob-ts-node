@@ -3,7 +3,7 @@
 
 * Org Babel support for Typescript via =ts-node=
 This package adds [[https://orgmode.org/worg/org-contrib/babel/][Org-Babel]] support support for evaluating =typescript= (and =ts= alias) code blocks using using [[https://github.com/TypeStrong/ts-node][ts-node]].
-Unlike [[https://github.com/lurdan/ob-typescript][ob-typescript]], ob-ts-node works seamlessly with Node.js CommonJS-style imports and does not require extra transpilation setup.
+Unlike [[https://github.com/lurdan/ob-typescript][ob-typescript]], ob-ts-node works seamlessly with Node.js CommonJS-style imports.
 
 ** Example
 #+BEGIN_EXAMPLE
@@ -44,15 +44,21 @@ The project is more or less in beta. But still, one can benefit from using it.
 #+BEGIN_SRC elisp
   (use-package ob-ts-node
     :after org
-    :quelpa
-    (ob-ts-node :repo "tmythicator/ob-ts-node"
-                :fetcher github))
+    :quelpa (ob-ts-node :repo "tmythicator/ob-ts-node" :fetcher github)
+    :config
+    (ob-ts-node-setup)
+    (add-to-list 'org-babel-load-languages '(ts-node . t))
+    (org-babel-do-load-languages 'org-babel-load-languages
+                                 org-babel-load-languages)
+    :custom
+    (ob-ts-node-tsconfig "~/.config/ts-node/tsconfig.json")) ;; Recommended to pin `tsconfig.json`
 #+END_SRC
 
 *** Manual:
 #+BEGIN_SRC elisp
   (add-to-list 'load-path "/path/to/ob-ts-node.el")
   (require 'ob-ts-node)
+  (ob-ts-node-full-babel-setup)
 #+END_SRC
 
 *** Node.js dependencies:
@@ -61,18 +67,26 @@ The project is more or less in beta. But still, one can benefit from using it.
 #+END_SRC
 
 ** Configuration
-Append =ts-node= to the =org-babel-load-languages=
-#+BEGIN_SRC elisp
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '((ts-node . t)
-     ))
+Recommended: pin a =tsconfig.json=, as shown in [[Installation]] section.
+=ts-node= is sensitive to compiler options. For predictable behavior across Babel blocks, use a project config (per [[https://github.com/TypeStrong/ts-node?tab=readme-ov-file#via-tsconfigjson-recommended][“via tsconfig.json (recommended)”]]).
+Minimal config you can copy:
+#+BEGIN_SRC json
+  {
+      "compilerOptions": {
+          "target": "ES2022",
+          "module": "NodeNext",
+          "moduleResolution": "NodeNext",
+          "strict": true,
+          "esModuleInterop": true
+      }
+  }
 #+END_SRC
-*** Header arguments
+Note: Set strict to =false= to evade type-errors for easier scenarios
+** Header arguments
 - *:cli-args*:
   Extra flags passed to ts-node:
   #+BEGIN_EXAMPLE
-  ,#+BEGIN_SRC typescript :cli-args "--project /path/to/tsconfig.json"
+  ,#+BEGIN_SRC typescript  :cli-args "--skip-project "
   // your code goes here
   ,#+END_SRC
   #+END_EXAMPLE
@@ -94,15 +108,49 @@ Append =ts-node= to the =org-babel-load-languages=
   ,#+BEGIN_SRC ts :cli-cmd "npx tsx"
   console.log("Using tsx");
   ,#+END_SRC
+
+    ,#+RESULTS:
+  : Using tsx
+  #+END_EXAMPLE
+** Use other execution engines (tsx / bun / deno)
+You can swap the runner via =:cli-cmd= and keep the same Org-Babel flow.
+- **tsx** (zero-config TS/ESM runner)
+  #+BEGIN_EXAMPLE
+  ,#+BEGIN_SRC typescript :cli-cmd "npx tsx"
+  console.log("Using npx tsx");
+  ,#+END_SRC
+  ,#+RESULTS:
+  : Using npx tsx
   #+END_EXAMPLE
 
-** Compatibility
-- Requires: Emacs >=25.1 (for =alist-get=), Org >=8.0
-- Emacs >=29: uses built-in =typescript-ts-mode=
-- Emacs <29: falls back to built-in =typescript-mode= (lisp/progmodes/typescript.el)
-- Otherwise: =js-mode= fallback
+- **bun** (fast JS/TS runtime)
+  #+BEGIN_EXAMPLE
+  ,#+BEGIN_SRC typescript :cli-cmd "npx bun run"
+  console.log("Hello from bun");
+  ,#+END_SRC
+  ,#+RESULTS:
+  : Hello from bun
+  #+END_EXAMPLE
 
+- **deno** (secure runtime; add permissions if needed)
+  #+BEGIN_EXAMPLE
+  ,#+BEGIN_SRC typescript :cli-cmd "npx deno run"
+  console.log("Deno here");
+  ,#+END_SRC
+  ,#+RESULTS:
+  : Deno here
+  #+END_EXAMPLE
+** Compatibility
+- Emacs >= 25.1 (for =alist-get=), Org >= 8.0
+- Emacs >= 29 uses =typescript-ts-mode=; older Emacs falls back to =typescript-mode=; otherwise =js-mode=.
 ** Troubleshooting
+*** #1 Unpredictable results? Pin your =tsconfig.json= (most common)
+If =tsconfig.json= isn’t found from the execution directory, =ts-node= falls back to internal defaults.
+Fix: place a project =tsconfig.json= in the repo root or set =ob-ts-node-tsconfig= to a known file.
+Quick sanity checks:
+#+BEGIN_SRC sh
+  ts-node --showConfig
+#+END_SRC
 *** Missing @types/node dependency
 #+BEGIN_SRC text
   error TS2580: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.

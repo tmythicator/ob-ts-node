@@ -4,8 +4,8 @@
 
 ;; Author: Alexandr Timchenko
 ;; URL: https://github.com/tmythicator/ob-ts-node
-;; Version: 0.2
-;; Keywords: literate programming, typescript, org-babel, REPL
+;; Version: 0.3
+;; Keywords: languages, tools
 ;; Package-Requires: ((emacs "25.1") (org "8.0"))
 
 ;; This file is not part of GNU Emacs.
@@ -50,20 +50,39 @@
 (defcustom ob-ts-node-command "ts-node"
   "Default command used to run ts-node."
   :type 'string
+  :safe #'stringp
+  :group 'org-babel)
+
+(defcustom ob-ts-node-tsconfig nil
+  "Path to a tsconfig.json used by ob-ts-node by default.
+Highly recommended to set for stable, reproducible behavior (see ts-node docs)."
+  :type '(choice (const :tag "Disabled" nil)
+                 (string :tag "Path"))
   :group 'org-babel)
 
 (defvar org-babel-default-header-args:typescript
-  '((:cli-args    . nil)   ;; additional flags for ts-node
-    (:cli-override . nil)  ;; completely override the command line
-    (:cli-cmd . nil))  ;; use an alternative command instead of `ob-ts-node-command`
-  "Default header arguments for TypeScript Babel blocks.")
+  '((:cli-args    . nil)
+    (:cli-override . nil)
+    (:cli-cmd . nil))
+  "Default header arguments for TypeScript Babel blocks.
+
+Recognized keys:
+- :cli-args     – additional flags passed to ts-node
+- :cli-override – completely override the command line
+- :cli-cmd      – alternative command instead of `ob-ts-node-command`.")
+
+(defvar org-babel-default-header-args:ts
+  org-babel-default-header-args:typescript)
 
 (defun ob-ts-node--run (body params)
   "Execute BODY as TypeScript code using ts-node with PARAMS."
   (let* ((src (org-babel-temp-file "ts-" ".ts"))
          (args (alist-get :cli-args params))
          (ovr (alist-get :cli-override params))
-         (cmd (or (alist-get :cli-cmd params) ob-ts-node-command))
+         (cmd-base (if ob-ts-node-tsconfig
+                       (concat ob-ts-node-command " --project " ob-ts-node-tsconfig)
+                     ob-ts-node-command))
+         (cmd (or (alist-get :cli-cmd params) cmd-base))
          (file (org-babel-process-file-name src)))
     (with-temp-file src (insert body))
     (let ((command
@@ -75,30 +94,29 @@
 
 ;;;###autoload
 (defun org-babel-execute:typescript (body params)
-  "Org-Babel executor for #+begin_src typescript blocks."
+  "Org-Babel executor for #+begin_src typescript blocks.
+Argument BODY is the contents of the source block as a string.
+Argument PARAMS is an alist of header arguments controlling execution."
   (ob-ts-node--run body params))
 
 ;;;###autoload
 (defun org-babel-execute:ts (body params)
-  "Org-Babel executor for #+begin_src ts blocks (alias for typescript)."
+  "Org-Babel executor for #+begin_src ts blocks (alias for typescript).
+Argument BODY is the contents of the source block as a string.
+Argument PARAMS is an alist of header arguments controlling execution."
   (ob-ts-node--run body params))
 
-(with-eval-after-load 'org
+;;;###autoload
+(defun ob-ts-node-setup ()
+  "Register TypeScript support for Org Babel and src editing."
   (add-to-list 'org-babel-tangle-lang-exts '("typescript" . "ts"))
-  (add-to-list 'org-babel-tangle-lang-exts '("ts"         . "ts"))
-  (add-to-list 'org-src-lang-modes
-               (cons "typescript"
-                     (cond
-                      ((fboundp 'typescript-ts-mode) 'typescript-ts)
-                      ((fboundp 'typescript-mode)    'typescript)
-                      (t 'js))))
-  (add-to-list 'org-src-lang-modes
-               (cons "ts"
-                     (cond
-                      ((fboundp 'typescript-ts-mode) 'typescript-ts)
-                      ((fboundp 'typescript-mode)    'typescript)
-                      (t 'js)))))
+  (add-to-list 'org-babel-tangle-lang-exts '("ts" . "ts"))
+  (let ((mode (cond
+               ((fboundp 'typescript-ts-mode) 'typescript-ts)
+               ((fboundp 'typescript-mode)    'typescript)
+               (t 'js))))
+    (dolist (lang '("typescript" "ts"))
+      (add-to-list 'org-src-lang-modes (cons lang mode)))))
 
 (provide 'ob-ts-node)
-
 ;;; ob-ts-node.el ends here
